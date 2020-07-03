@@ -1,8 +1,13 @@
 package main
 
 import (
+	"fmt"
+	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/metadata"
 	"io"
-	"log"
+	//"log"
+	"os"
+	"time"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -21,7 +26,7 @@ func createCustomer(client pb.CustomerClient, customer *pb.CustomerRequest) {
 		log.Fatalf("Could not create Customer: %v", err)
 	}
 	if resp.Success {
-		log.Printf("A new Customer has been added with id: %d", resp.Id)
+		fmt.Printf("A new Customer has been added with id: %d", resp.Id)
 	}
 }
 
@@ -41,12 +46,49 @@ func getCustomers(client pb.CustomerClient, filter *pb.CustomerFilter) {
 		if err != nil {
 			log.Fatalf("%v.GetCustomers(_) = _, %v", client, err)
 		}
-		log.Printf("Customer: %v", customer)
+		fmt.Printf("Customer: %v", customer)
 	}
+}
+
+var log grpclog.LoggerV2
+
+func init() {
+	log = grpclog.NewLoggerV2(os.Stdout, os.Stderr, os.Stderr)
+	grpclog.SetLoggerV2(log)
+}
+
+func getContextWithAuth() context.Context {
+	ctx := context.Background()
+	// Hard-coded auth info for the sake of demo,
+	// replace it with JWT tokens
+	md := metadata.Pairs("authorization", "valid-token1")
+	ctx = metadata.NewOutgoingContext(ctx, md)
+	return ctx
+}
+func withClientInterceptor() grpc.DialOption {
+	return grpc.WithUnaryInterceptor(clientInterceptor)
+}
+
+func clientInterceptor(
+	ctx context.Context,
+	method string,
+	req interface{},
+	reply interface{},
+	cc *grpc.ClientConn,
+	invoker grpc.UnaryInvoker,
+	opts ...grpc.CallOption,
+) error {
+	start := time.Now()
+	err := invoker(ctx, method, req, reply, cc, opts...) // <==
+	log.Infof("Invoking RPC method=%s; Duration=%s; Error=%v", method,
+		time.Since(start), err)
+	return err
 }
 func main() {
 	// Set up a connection to the gRPC server.
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
+	// conn, err := grpc.Dial(address, grpc.WithInsecure(),withClientInterceptor())
+
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

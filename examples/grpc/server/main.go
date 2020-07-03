@@ -2,8 +2,15 @@ package main
 
 import (
 	"context"
-	"log"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"time"
+
+	//"log"
 	"net"
+	"os"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -41,6 +48,59 @@ func (s *server) GetCustomers(filter *pb.CustomerFilter, stream pb.Customer_GetC
 	return nil
 }
 
+var log grpclog.LoggerV2
+
+func init() {
+	log = grpclog.NewLoggerV2(os.Stdout, os.Stderr, os.Stderr)
+	grpclog.SetLoggerV2(log)
+}
+
+func withServerInterceptor() grpc.ServerOption {
+	return grpc.UnaryInterceptor(serverInterceptor)
+}
+
+// general unary interceptor function to handle auth per RPC call as well as logging
+func serverInterceptor(ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler) (interface{}, error) {
+	start := time.Now()
+	if info.FullMethod == "/proto.Customer/CreateCustomer" {
+		if err := authorize(ctx); err != nil {
+			return nil, err
+		}
+	}
+
+	h, err := handler(ctx, req)
+
+	//logging
+	log.Infof("request - Method:%s\tDuration:%s\tError:%v\n",
+		info.FullMethod,
+		time.Since(start),
+		err)
+
+	return h, err
+}
+func authorize(ctx context.Context) error {
+	// code from the authorize() function:
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return status.Errorf(codes.InvalidArgument, "retrieving metadata failed")
+	}
+
+	token, ok := md["authorization"]
+	if !ok {
+		return status.Errorf(codes.Unauthenticated, "no auth details supplied")
+	}
+
+	if token[0] != "valid-token" {
+		return status.Errorf(codes.Unauthenticated, "invalid token")
+	}
+
+	return nil
+}
+
 func main() {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
@@ -48,6 +108,10 @@ func main() {
 	}
 	// Creates a new gRPC server
 	s := grpc.NewServer()
+	//s := grpc.NewServer(
+	//	  withServerInterceptor(),
+	//	)
+
 	pb.RegisterCustomerServer(s, &server{})
 	s.Serve(lis)
 }
