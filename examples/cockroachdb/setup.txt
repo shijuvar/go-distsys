@@ -1,0 +1,36 @@
+# Start node 1:
+cockroach start --insecure \
+--store=bank-1 \
+--host=localhost \
+--background
+
+# Start node 2:
+cockroach start --insecure \
+--store=bank-2 \
+--host=localhost \
+--port=26258 \
+--http-port=8081 \
+--join=localhost:26257 \
+--background
+
+# Start node 3:
+cockroach start --insecure \
+--store=bank-3 \
+--host=localhost \
+--port=26259 \
+--http-port=8082 \
+--join=localhost:26257 \
+--background
+
+# Create user
+cockroach user set shijuvar --insecure
+
+cockroach sql --insecure -e 'CREATE DATABASE bank'
+
+# Grant privileges to the shijuvar user
+cockroach sql --insecure -e 'GRANT ALL ON DATABASE bank TO shijuvar'
+
+#
+Start a SQL Shell:
+cockroach sql \
+--url="postgresql://shijuvar@localhost:26257/bank?sslmode=disable";
