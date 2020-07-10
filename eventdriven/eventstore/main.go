@@ -11,7 +11,7 @@ import (
 
 	"github.com/shijuvar/go-distsys/eventdriven/pb"
 	"github.com/shijuvar/go-distsys/eventdriven/repository"
-	"github.com/shijuvar/go-distsys/natsutil"
+	"github.com/shijuvar/go-distsys/pkg/natsutil"
 )
 
 const (

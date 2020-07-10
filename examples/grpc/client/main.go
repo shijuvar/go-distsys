@@ -1,16 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"google.golang.org/grpc/grpclog"
-	"google.golang.org/grpc/metadata"
 	"io"
-	//"log"
 	"os"
 	"time"
 
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/shijuvar/go-distsys/examples/grpc/pb"
 )
@@ -86,8 +85,8 @@ func clientInterceptor(
 }
 func main() {
 	// Set up a connection to the gRPC server.
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
-	// conn, err := grpc.Dial(address, grpc.WithInsecure(),withClientInterceptor())
+	//conn, err := grpc.Dial(address, grpc.WithInsecure())
+	conn, err := grpc.Dial(address, grpc.WithInsecure(), withClientInterceptor())
 
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)

@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/shijuvar/go-distsys/eventdriven/pb"
-	"github.com/shijuvar/go-distsys/natsutil"
+	"github.com/shijuvar/go-distsys/pkg/natsutil"
 )
 
 const (

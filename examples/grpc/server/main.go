@@ -2,18 +2,16 @@ package main
 
 import (
 	"context"
+	"net"
+	"os"
+	"strings"
+	"time"
+
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"time"
-
-	//"log"
-	"net"
-	"os"
-	"strings"
-
-	"google.golang.org/grpc"
 
 	"github.com/shijuvar/go-distsys/examples/grpc/pb"
 )
@@ -108,10 +106,10 @@ func main() {
 	}
 	// Creates a new gRPC server
 	s := grpc.NewServer()
-	//s := grpc.NewServer(
-	//	  withServerInterceptor(),
-	//	)
-
+	// Register v1 server
 	pb.RegisterCustomerServer(s, &server{})
+	// Register v2 server
+	//pbv2.RegisterCustomerServer(s, &serverV2{})
+	// Serve gRPC server
 	s.Serve(lis)
 }
