@@ -1,4 +1,4 @@
-# Distributed Systems Programming Guidance in Go
+# Distributed Systems Programming in Go
 
 ## Technologies
 * Go 
