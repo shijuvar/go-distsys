@@ -1,7 +1,7 @@
-# go-distsys: Distributed Systems Programming Guidance in Go
+# Distributed Systems Programming Guidance in Go
 
 ## Technologies
-* Go programming language
+* Go 
 * gRPC
 * NATS, NATS Streaming, NATS JetStream
 * CockroachDB
