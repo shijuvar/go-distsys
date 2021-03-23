@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"net"
 	"os"
 	"strings"
@@ -9,6 +10,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -63,7 +65,9 @@ func serverInterceptor(ctx context.Context,
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (interface{}, error) {
 	start := time.Now()
-	if info.FullMethod == "/proto.Customer/CreateCustomer" {
+	if info.FullMethod == "/customer.Customer/CreateCustomer" {
+		log.Info("---------CreateCustomer---------\n")
+
 		if err := authorize(ctx); err != nil {
 			return nil, err
 		}
@@ -92,20 +96,42 @@ func authorize(ctx context.Context) error {
 		return status.Errorf(codes.Unauthenticated, "no auth details supplied")
 	}
 
-	if token[0] != "valid-token" {
+	if token[0] != "my-valid-token" {
 		return status.Errorf(codes.Unauthenticated, "invalid token")
 	}
 
+	log.Info("Authorized to the RPC server")
 	return nil
 }
+func loadTLSCredentials() (credentials.TransportCredentials, error) {
+	// Load server's certificate and private key
+	serverCert, err := tls.LoadX509KeyPair("cert/server-cert.pem", "cert/server-key.pem")
+	if err != nil {
+		return nil, err
+	}
 
+	// Create the credentials and return it
+	config := &tls.Config{
+		Certificates: []tls.Certificate{serverCert},
+		ClientAuth:   tls.NoClientCert,
+	}
+
+	return credentials.NewTLS(config), nil
+}
 func main() {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	// Creates a new gRPC server
-	s := grpc.NewServer()
+	/* gRPC server with TLS
+	tlsCredentials, err := loadTLSCredentials()
+	s := grpc.NewServer(
+		grpc.Creds(tlsCredentials),
+		withServerInterceptor(),
+	)
+	*/
+	s := grpc.NewServer(withServerInterceptor())
 	// Register v1 server
 	pb.RegisterCustomerServer(s, &server{})
 	// Register v2 server

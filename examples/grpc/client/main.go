@@ -2,8 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"google.golang.org/grpc/credentials"
 	"io"
+	"io/ioutil"
 	"os"
 	"time"
 
@@ -20,7 +24,7 @@ const (
 
 // createCustomer calls the RPC method CreateCustomer of CustomerServer
 func createCustomer(client pb.CustomerClient, customer *pb.CustomerRequest) {
-	resp, err := client.CreateCustomer(context.Background(), customer)
+	resp, err := client.CreateCustomer(getContextWithAuth(), customer)
 	if err != nil {
 		log.Fatalf("Could not create Customer: %v", err)
 	}
@@ -60,7 +64,7 @@ func getContextWithAuth() context.Context {
 	ctx := context.Background()
 	// Hard-coded auth info for the sake of demo,
 	// replace it with JWT tokens
-	md := metadata.Pairs("authorization", "valid-token1")
+	md := metadata.Pairs("authorization", "my-valid-token")
 	ctx = metadata.NewOutgoingContext(ctx, md)
 	return ctx
 }
@@ -83,8 +87,41 @@ func clientInterceptor(
 		time.Since(start), err)
 	return err
 }
+
+func loadTLSCredentials() (credentials.TransportCredentials, error) {
+	// Load certificate of the CA who signed server's certificate
+	pemServerCA, err := ioutil.ReadFile("cert/ca-cert.pem")
+	if err != nil {
+		return nil, err
+	}
+
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(pemServerCA) {
+		return nil, fmt.Errorf("failed to add server CA's certificate")
+	}
+
+	// Create the credentials and return it
+	config := &tls.Config{
+		RootCAs: certPool,
+	}
+
+	return credentials.NewTLS(config), nil
+}
 func main() {
 	// Set up a connection to the gRPC server.
+	// Connection with secured TLS
+	/*
+		tlsCredentials, err := loadTLSCredentials()
+		   if err != nil {
+		       log.Fatal("cannot load TLS credentials: ", err)
+		   }
+
+		conn, err := grpc.Dial(address, grpc.WithTransportCredentials(tlsCredentials))
+		   if err != nil {
+			   log.Fatalf("did not connect: %v", err)
+		   }
+	*/
+
 	//conn, err := grpc.Dial(address, grpc.WithInsecure())
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), withClientInterceptor())
 
