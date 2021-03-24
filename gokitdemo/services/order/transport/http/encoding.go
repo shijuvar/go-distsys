@@ -37,18 +37,21 @@ func decodeChangeStatusRequest(_ context.Context, r *http.Request) (request inte
 }
 
 func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	if e, ok := response.(errorer); ok && e.error() != nil {
+	if e, ok := response.(Errorer); ok && e.Error() != nil {
 		// Not a Go kit transport error, but a business-logic error.
 		// Provide those as HTTP errors.
-		encodeErrorResponse(ctx, e.error(), w)
+		encodeErrorResponse(ctx, e.Error(), w)
 		return nil
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	return json.NewEncoder(w).Encode(response)
 }
 
-type errorer interface {
-	error() error
+// Errorer is implemented by all concrete response types that may contain
+// errors. It allows us to change the HTTP response code without needing to
+// trigger an endpoint (transport-level) error.
+type Errorer interface {
+	Error() error
 }
 
 func encodeErrorResponse(_ context.Context, err error, w http.ResponseWriter) {

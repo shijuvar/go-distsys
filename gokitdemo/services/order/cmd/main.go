@@ -26,7 +26,7 @@ import (
 
 func main() {
 	var (
-		httpAddr = flag.String("http.addr", ":8080", "HTTP listen address")
+		httpAddr = flag.String("http.addr", ":3000", "HTTP listen address")
 	)
 	flag.Parse()
 	// initialize our OpenCensus configuration and defer a clean-up
@@ -70,6 +70,7 @@ func main() {
 		// Add service middleware here
 		// Logging middleware
 		svc = middleware.LoggingMiddleware(logger)(svc)
+
 	}
 	// Create Go kit endpoints for the Order Service
 	// Then decorates with endpoint middlewares
@@ -109,43 +110,43 @@ func main() {
 	}()
 	level.Error(logger).Log("exit", <-errs)
 	/*
-		With package "github.com/oklog/run"
+			With package "github.com/oklog/run"
 
-		var g run.Group
-		{
-		   server := &http.Server{
-						Addr:    *httpAddr,
-						Handler: h,
-					}
-		       g.Add(func() error {
-				   return server.ListenAndServe()
-				}, func(error) {
-						server.Close()
-					})
-	    }
-
-				{
-						// set-up our signal handler
-						var (
-							cancelInterrupt = make(chan struct{})
-							c               = make(chan os.Signal, 2)
-						)
-						defer close(c)
-
-						g.Add(func() error {
-							signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-							select {
-							case sig := <-c:
-								return fmt.Errorf("received signal %s", sig)
-							case <-cancelInterrupt:
-								return nil
-							}
-						}, func(error) {
-							close(cancelInterrupt)
+			var g run.Group
+			{
+			   server := &http.Server{
+							Addr:    *httpAddr,
+							Handler: h,
+						}
+			       g.Add(func() error {
+					   return server.ListenAndServe()
+					}, func(error) {
+							server.Close()
 						})
-					}
+		    }
 
-					// spawn our goroutines and wait for shutdown
-					level.Error(logger).Log("exit", g.Run())
+					{
+							// set-up our signal handler
+							var (
+								cancelInterrupt = make(chan struct{})
+								c               = make(chan os.Signal, 2)
+							)
+							defer close(c)
+
+							g.Add(func() error {
+								signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+								select {
+								case sig := <-c:
+									return fmt.Errorf("received signal %s", sig)
+								case <-cancelInterrupt:
+									return nil
+								}
+							}, func(error) {
+								close(cancelInterrupt)
+							})
+						}
+
+						// spawn our goroutines and wait for shutdown
+						level.Error(logger).Log("exit", g.Run())
 	*/
 }

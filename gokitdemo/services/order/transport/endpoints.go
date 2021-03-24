@@ -9,6 +9,8 @@ import (
 )
 
 // Endpoints holds all Go kit endpoints for the Order service.
+// It's meant to be used as a helper struct,
+// to collect all of the endpoints into a single parameter.
 type Endpoints struct {
 	Create       endpoint.Endpoint
 	GetByID      endpoint.Endpoint
