@@ -24,6 +24,7 @@ const (
 
 // createCustomer calls the RPC method CreateCustomer of CustomerServer
 func createCustomer(client pb.CustomerClient, customer *pb.CustomerRequest) {
+
 	resp, err := client.CreateCustomer(getContextWithAuth(), customer)
 	if err != nil {
 		log.Fatalf("Could not create Customer: %v", err)
@@ -36,6 +37,8 @@ func createCustomer(client pb.CustomerClient, customer *pb.CustomerRequest) {
 // getCustomers calls the RPC method GetCustomers of CustomerServer
 func getCustomers(client pb.CustomerClient, filter *pb.CustomerFilter) {
 	// calling the streaming API
+	//ctx, cancel := context.WithTimeout(context.Background(), 1 * time.Minute)
+	//defer cancel()
 	stream, err := client.GetCustomers(context.Background(), filter)
 	if err != nil {
 		log.Fatalf("Error on get customers: %v", err)
@@ -61,6 +64,7 @@ func init() {
 }
 
 func getContextWithAuth() context.Context {
+
 	ctx := context.Background()
 	// Hard-coded auth info for the sake of demo,
 	// replace it with JWT tokens
@@ -110,20 +114,19 @@ func loadTLSCredentials() (credentials.TransportCredentials, error) {
 func main() {
 	// Set up a connection to the gRPC server.
 	// Connection with secured TLS
-	/*
-		tlsCredentials, err := loadTLSCredentials()
-		   if err != nil {
-		       log.Fatal("cannot load TLS credentials: ", err)
-		   }
 
-		conn, err := grpc.Dial(address, grpc.WithTransportCredentials(tlsCredentials))
-		   if err != nil {
-			   log.Fatalf("did not connect: %v", err)
-		   }
-	*/
+	tlsCredentials, err := loadTLSCredentials()
+	if err != nil {
+		log.Fatal("cannot load TLS credentials: ", err)
+	}
+
+	//conn, err := grpc.Dial(address, grpc.WithTransportCredentials(tlsCredentials))
+	// if err != nil {
+	//	   log.Fatalf("did not connect: %v", err)
+	// }
 
 	//conn, err := grpc.Dial(address, grpc.WithInsecure())
-	conn, err := grpc.Dial(address, grpc.WithInsecure(), withClientInterceptor())
+	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(tlsCredentials), withClientInterceptor())
 
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)

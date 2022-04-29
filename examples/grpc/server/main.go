@@ -24,6 +24,7 @@ const (
 
 // server is used to implement customer.CustomerServer.
 type server struct {
+	pb.UnimplementedCustomerServer
 	savedCustomers []*pb.CustomerRequest
 }
 
@@ -123,15 +124,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+
 	// Creates a new gRPC server
-	/* gRPC server with TLS
-	tlsCredentials, err := loadTLSCredentials()
-	s := grpc.NewServer(
-		grpc.Creds(tlsCredentials),
-		withServerInterceptor(),
-	)
-	*/
-	s := grpc.NewServer(withServerInterceptor())
+	//gRPC server with TLS
+	//tlsCredentials, err := loadTLSCredentials()
+	//s := grpc.NewServer(
+	//	grpc.Creds(tlsCredentials),
+	//	withServerInterceptor(),
+	//
+	//)
+
+	s := grpc.NewServer()
 	// Register v1 server
 	pb.RegisterCustomerServer(s, &server{})
 	// Register v2 server
