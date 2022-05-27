@@ -1,6 +1,6 @@
 # Distributed Systems Programming in Go
 
-<b>A bunch of example demos are comng..</b>
+## Updated source code is moved into [go-distributed-sys](https://github.com/shijuvar/go-distributed-sys)
 
 ## Technologies
 * Go 
